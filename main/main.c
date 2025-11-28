@@ -53,9 +53,9 @@ void wifi_connection() {
     //what are the types...????
     wifi_config_t wifi_configuration = {
         .sta = {
-            .ssid = SSID,
-            .password = PASS}};
-    esp_wifi_set_config(ESP_IF_WIFI_STA, &wifi_configuration);
+            .ssid  = "a string?",
+            .password = "another string?"}};
+    esp_wifi_set_config(WIFI_IF_STA, &wifi_configuration);
 
     esp_wifi_start();
     esp_wifi_connect();
