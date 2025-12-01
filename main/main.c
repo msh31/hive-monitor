@@ -12,6 +12,39 @@
 #include "esp_netif.h"
 #include "esp_event.h"
 // #include "esp_http_client.h"
+//
+
+#define MAX_SSID_LENGTH 32
+#define MAX_PASS_LENGTH 64
+
+typedef struct {
+    char ssid[MAX_SSID_LENGTH + 1]; //+1 for null terminator
+    char password[MAX_PASS_LENGTH + 1];
+} WiFiLogin;
+
+//  USER MUST CREATE THE config.txt FILE themselves
+//  AND FILL IT WITH THE RIGHT CREDENTIALS
+int load_config(const char *filename, WiFiLogin *login) {
+    FILE *file = fopen(filename, "r");
+    if (!file) {
+        perror("Failed to open config file");
+        return -1;
+    }
+
+    char line[256];
+    while (fgets(line, sizeof(line), file)) {
+        if (strncmp(line, "SSID=", 5) == 0) {
+            strncpy(login->ssid, line + 5, MAX_SSID_LENGTH);
+            login->ssid[MAX_SSID_LENGTH] = '\0';
+        } else if (strncmp(line, "PASSWORD=", 9) == 0) {
+            strncpy(login->password, line + 9, MAX_PASS_LENGTH);
+            login->password[MAX_PASS_LENGTH] = '\0';
+        }
+    }
+
+    fclose(file);
+    return 0;
+}
 
 static void wifi_event_handler(void *event_handler_arg, esp_event_base_t event_base, int32_t event_id, void *event_data)
 {
@@ -50,15 +83,19 @@ void wifi_connection() {
     esp_event_handler_register(WIFI_EVENT, ESP_EVENT_ANY_ID, wifi_event_handler, NULL);
     esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, wifi_event_handler, NULL);
 
-    //what are the types...????
-    wifi_config_t wifi_configuration = {
-        .sta = {
-            .ssid  = "a string?",
-            .password = "another string?"}};
-    esp_wifi_set_config(WIFI_IF_STA, &wifi_configuration);
+    WiFiLogin cool_wifi;
 
-    esp_wifi_start();
-    esp_wifi_connect();
+    if (load_config("config.txt", &cool_wifi) == 0) {
+        wifi_config_t wifi_cfg = {};
+
+        strncpy((char*)wifi_cfg.sta.ssid, cool_wifi.ssid, MAX_SSID_LENGTH);
+        strncpy((char*)wifi_cfg.sta.password, cool_wifi.password, MAX_PASS_LENGTH);
+
+        esp_wifi_set_config(WIFI_IF_STA, &wifi_cfg);
+
+        esp_wifi_start();
+        esp_wifi_connect();
+    }
 }
 
 void app_main(void) {
