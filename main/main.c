@@ -14,9 +14,12 @@
 // #include "esp_http_client.h"
 
 #include "wifi_config.h"
+#include <esp32-dht11.h>
 
 #define MAX_SSID_LENGTH 32
 #define MAX_PASS_LENGTH 64
+#define CONFIG_DHT11_PIN GPIO_NUM_26
+#define CONFIG_CONNECTION_TIMEOUT 5
 
 static void wifi_event_handler(void *event_handler_arg, esp_event_base_t event_base, int32_t event_id, void *event_data)
 {
@@ -37,10 +40,6 @@ static void wifi_event_handler(void *event_handler_arg, esp_event_base_t event_b
         default:
             break;
     }
-}
-
-void on_data_recv(const esp_now_recv_info_t *info, const uint8_t *data, int len) {
-
 }
 
 void wifi_connection() {
@@ -68,12 +67,18 @@ void wifi_connection() {
 
 void app_main(void) {
     ESP_ERROR_CHECK(nvs_flash_init());
-    wifi_connection(); //TODO: add error check
+    wifi_connection();
 
-    ESP_ERROR_CHECK(esp_now_init()); //may not be needed for this proj
-    // ESP_ERROR_CHECK(esp_http_client_open)
+    dht11_t dht11_sensor;
+    dht11_sensor.dht11_pin = CONFIG_DHT11_PIN;
 
-    esp_now_register_recv_cb(on_data_recv);
+    while(true) {
+        if(!dht11_read(&dht11_sensor, CONFIG_CONNECTION_TIMEOUT)) {  
+            printf("[TEMP]> %.2f \n",dht11_sensor.temperature);
+            printf("[HUMID]> %.2f \n",dht11_sensor.humidity);
+        }
+        vTaskDelay(2000/portTICK_PERIOD_MS);
+    } 
 
     printf("Wifi Initialized!\n");
 }

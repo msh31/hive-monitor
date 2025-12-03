@@ -3,7 +3,7 @@ Hardware side of an assignment from my course for a client.
 
 #### This repository is only 1/3 of the project, you can find the other repos here:
 - [Frontend](https://github.com/DaanBouma/hive-frontend)
-- [Backend](https://github.com/sp4rklegl1tch/hive-core)
+- [Backend](https://github.com/punthenk/Bee_API)
 
 ---
 
