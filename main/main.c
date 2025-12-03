@@ -1,52 +1,79 @@
-/*
- * SPDX-FileCopyrightText: 2010-2022 Espressif Systems (Shanghai) CO LTD
- *
- * SPDX-License-Identifier: CC0-1.0
- */
-
+#include <stdint.h>
 #include <stdio.h>
-#include <inttypes.h>
-#include "sdkconfig.h"
-#include "freertos/FreeRTOS.h"
+#include <string.h>
+
+#include "esp_wifi_types_generic.h"
+#include "freertos/FreeRTOS.h" // open-source real-0time OS on the ESP32
 #include "freertos/task.h"
-#include "esp_chip_info.h"
-#include "esp_flash.h"
-#include "esp_system.h"
 
-void app_main(void)
+#include "nvs_flash.h"
+#include "esp_wifi.h"
+#include "esp_now.h"
+#include "esp_netif.h"
+#include "esp_event.h"
+// #include "esp_http_client.h"
+
+#include "wifi_config.h"
+
+#define MAX_SSID_LENGTH 32
+#define MAX_PASS_LENGTH 64
+
+static void wifi_event_handler(void *event_handler_arg, esp_event_base_t event_base, int32_t event_id, void *event_data)
 {
-    printf("Hello world!\n");
-
-    /* Print chip information */
-    esp_chip_info_t chip_info;
-    uint32_t flash_size;
-    esp_chip_info(&chip_info);
-    printf("This is %s chip with %d CPU core(s), %s%s%s%s, ",
-           CONFIG_IDF_TARGET,
-           chip_info.cores,
-           (chip_info.features & CHIP_FEATURE_WIFI_BGN) ? "WiFi/" : "",
-           (chip_info.features & CHIP_FEATURE_BT) ? "BT" : "",
-           (chip_info.features & CHIP_FEATURE_BLE) ? "BLE" : "",
-           (chip_info.features & CHIP_FEATURE_IEEE802154) ? ", 802.15.4 (Zigbee/Thread)" : "");
-
-    unsigned major_rev = chip_info.revision / 100;
-    unsigned minor_rev = chip_info.revision % 100;
-    printf("silicon revision v%d.%d, ", major_rev, minor_rev);
-    if(esp_flash_get_size(NULL, &flash_size) != ESP_OK) {
-        printf("Get flash size failed");
-        return;
+    switch (event_id)
+    {
+        case WIFI_EVENT_STA_START:
+            printf("WiFi connecting ... \n");
+            break;
+        case WIFI_EVENT_STA_CONNECTED:
+            printf("WiFi connected ... \n");
+            break;
+        case WIFI_EVENT_STA_DISCONNECTED:
+            printf("WiFi lost connection ... \n");
+            break;
+        case IP_EVENT_STA_GOT_IP:
+            printf("WiFi got IP ... \n\n");
+            break;
+        default:
+            break;
     }
+}
 
-    printf("%" PRIu32 "MB %s flash\n", flash_size / (uint32_t)(1024 * 1024),
-           (chip_info.features & CHIP_FEATURE_EMB_FLASH) ? "embedded" : "external");
+void on_data_recv(const esp_now_recv_info_t *info, const uint8_t *data, int len) {
 
-    printf("Minimum free heap size: %" PRIu32 " bytes\n", esp_get_minimum_free_heap_size());
+}
 
-    for (int i = 10; i >= 0; i--) {
-        printf("Restarting in %d seconds...\n", i);
-        vTaskDelay(1000 / portTICK_PERIOD_MS);
-    }
-    printf("Restarting now.\n");
-    fflush(stdout);
-    esp_restart();
+void wifi_connection() {
+    ESP_ERROR_CHECK(esp_netif_init());
+    ESP_ERROR_CHECK(esp_event_loop_create_default());
+
+    esp_netif_create_default_wifi_sta();
+
+    wifi_init_config_t wifi_initiation = WIFI_INIT_CONFIG_DEFAULT();
+    esp_wifi_init(&wifi_initiation);
+
+    esp_event_handler_register(WIFI_EVENT, ESP_EVENT_ANY_ID, wifi_event_handler, NULL);
+    esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, wifi_event_handler, NULL);
+
+    wifi_config_t wifi_cfg = {};
+
+    strncpy((char*)wifi_cfg.sta.ssid, WIFI_SSID, MAX_SSID_LENGTH);
+    strncpy((char*)wifi_cfg.sta.password, WIFI_PASS, MAX_PASS_LENGTH);
+
+    esp_wifi_set_config(WIFI_IF_STA, &wifi_cfg);
+
+    esp_wifi_start();
+    esp_wifi_connect();
+}
+
+void app_main(void) {
+    ESP_ERROR_CHECK(nvs_flash_init());
+    wifi_connection(); //TODO: add error check
+
+    ESP_ERROR_CHECK(esp_now_init()); //may not be needed for this proj
+    // ESP_ERROR_CHECK(esp_http_client_open)
+
+    esp_now_register_recv_cb(on_data_recv);
+
+    printf("Wifi Initialized!\n");
 }
