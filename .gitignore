@@ -3,3 +3,4 @@ build/
 .cache/
 *.old
 main/wifi_config.h
+test.c
