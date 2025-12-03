@@ -14,6 +14,7 @@
 // #include "esp_http_client.h"
 
 #include "wifi_config.h"
+#include <esp32-dht11.h>
 
 #define MAX_SSID_LENGTH 32
 #define MAX_PASS_LENGTH 64

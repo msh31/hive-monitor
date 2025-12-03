@@ -1,0 +1,3 @@
+[submodule "components/esp32-dht11"]
+	path = components/esp32-dht11
+	url = https://github.com/abdellah2288/esp32-dht11.git
