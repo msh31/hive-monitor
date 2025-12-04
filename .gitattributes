@@ -1,0 +1,4 @@
+*.cmake linguist-language=plaintext
+*.CMake linguist-language=plaintext
+CMakeLists.txt linguist-language=plaintext
+
