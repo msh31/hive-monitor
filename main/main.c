@@ -2,16 +2,17 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "esp_wifi_types_generic.h"
 #include "freertos/FreeRTOS.h" // open-source real-0time OS on the ESP32
 #include "freertos/task.h"
+#include "freertos/event_groups.h"
 
 #include "nvs_flash.h"
 #include "esp_wifi.h"
 #include "esp_now.h"
 #include "esp_netif.h"
 #include "esp_event.h"
-// #include "esp_http_client.h"
+#include "esp_http_client.h"
+#include "esp_wifi_types_generic.h"
 
 #include "wifi_config.h"
 #include <esp32-dht11.h>
@@ -20,6 +21,37 @@
 #define MAX_PASS_LENGTH 64
 #define CONFIG_DHT11_PIN GPIO_NUM_26
 #define CONFIG_CONNECTION_TIMEOUT 5
+
+static EventGroupHandle_t wifi_event_group;
+const int WIFI_CONNECTED_BIT = BIT0;
+
+void send_sensor_data(float temp, float humidity) {
+    // char json_payload[128];
+    //
+    // snprintf(json_payload, sizeof(json_payload), 
+    //          "{\"temperature\":%.2f,\"humidity\":%.2f}", 
+    //          temp, humidity);
+
+    esp_http_client_config_t config = {
+        .url = "https://beehive.free.beeceptor.com/post",
+        .method = HTTP_METHOD_POST,
+    };
+    esp_http_client_handle_t client = esp_http_client_init(&config);
+
+    const char *post_data = "{\"field1\":\"value1\"}";
+    esp_http_client_set_url(client, "https://beehive.free.beeceptor.com/post");
+    esp_http_client_set_method(client, HTTP_METHOD_POST);
+    esp_http_client_set_header(client, "Content-Type", "application/json");
+    esp_http_client_set_post_field(client, post_data, strlen(post_data));
+    int err = esp_http_client_perform(client);
+    if (err == ESP_OK) {
+        ESP_LOGI("INF", "HTTP POST Status = %d, content_length = %"PRId64,
+                 esp_http_client_get_status_code(client),
+                 esp_http_client_get_content_length(client));
+    } else {
+        ESP_LOGE("INF", "HTTP POST request failed: %s", esp_err_to_name(err));
+    }
+}
 
 static void wifi_event_handler(void *event_handler_arg, esp_event_base_t event_base, int32_t event_id, void *event_data)
 {
@@ -33,9 +65,11 @@ static void wifi_event_handler(void *event_handler_arg, esp_event_base_t event_b
             break;
         case WIFI_EVENT_STA_DISCONNECTED:
             printf("WiFi lost connection ... \n");
+            xEventGroupClearBits(wifi_event_group, WIFI_CONNECTED_BIT);
             break;
         case IP_EVENT_STA_GOT_IP:
             printf("WiFi got IP ... \n\n");
+            xEventGroupSetBits(wifi_event_group, WIFI_CONNECTED_BIT);  // Signal ready
             break;
         default:
             break;
@@ -43,6 +77,7 @@ static void wifi_event_handler(void *event_handler_arg, esp_event_base_t event_b
 }
 
 void wifi_connection() {
+    wifi_event_group = xEventGroupCreate(); 
     ESP_ERROR_CHECK(esp_netif_init());
     ESP_ERROR_CHECK(esp_event_loop_create_default());
 
@@ -69,16 +104,21 @@ void app_main(void) {
     ESP_ERROR_CHECK(nvs_flash_init());
     wifi_connection();
 
-    dht11_t dht11_sensor;
-    dht11_sensor.dht11_pin = CONFIG_DHT11_PIN;
+    xEventGroupWaitBits(wifi_event_group, WIFI_CONNECTED_BIT, false, true, portMAX_DELAY);
+    printf("WiFi ready, starting HTTP client...\n");
 
-    while(true) {
-        if(!dht11_read(&dht11_sensor, CONFIG_CONNECTION_TIMEOUT)) {  
-            printf("[TEMP]> %.2f \n",dht11_sensor.temperature);
-            printf("[HUMID]> %.2f \n",dht11_sensor.humidity);
-        }
-        vTaskDelay(2000/portTICK_PERIOD_MS);
-    } 
+    // dht11_t dht11_sensor;
+    // dht11_sensor.dht11_pin = CONFIG_DHT11_PIN;
+
+    send_sensor_data(1.0, 69.0);
+
+    // while(true) {
+    //     if(!dht11_read(&dht11_sensor, CONFIG_CONNECTION_TIMEOUT)) {  
+    //         printf("[TEMP]> %.2f \n",dht11_sensor.temperature);
+    //         printf("[HUMID]> %.2f \n",dht11_sensor.humidity);
+    //     }
+    //     vTaskDelay(2000/portTICK_PERIOD_MS);
+    // } 
 
     printf("Wifi Initialized!\n");
 }
