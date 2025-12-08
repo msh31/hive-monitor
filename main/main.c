@@ -33,13 +33,13 @@ void send_sensor_data(float temp, float humidity) {
     //          temp, humidity);
 
     esp_http_client_config_t config = {
-        .url = "https://beehive.free.beeceptor.com/post",
+        .url = "http://webhook.site/cb1096ff-481e-4dd4-aa47-feeef8191e45",
         .method = HTTP_METHOD_POST,
     };
     esp_http_client_handle_t client = esp_http_client_init(&config);
 
     const char *post_data = "{\"field1\":\"value1\"}";
-    esp_http_client_set_url(client, "https://beehive.free.beeceptor.com/post");
+    esp_http_client_set_url(client, "http://webhook.site/cb1096ff-481e-4dd4-aa47-feeef8191e45");
     esp_http_client_set_method(client, HTTP_METHOD_POST);
     esp_http_client_set_header(client, "Content-Type", "application/json");
     esp_http_client_set_post_field(client, post_data, strlen(post_data));
@@ -69,7 +69,7 @@ static void wifi_event_handler(void *event_handler_arg, esp_event_base_t event_b
             break;
         case IP_EVENT_STA_GOT_IP:
             printf("WiFi got IP ... \n\n");
-            xEventGroupSetBits(wifi_event_group, WIFI_CONNECTED_BIT);  // Signal ready
+            xEventGroupSetBits(wifi_event_group, WIFI_CONNECTED_BIT);
             break;
         default:
             break;
@@ -107,18 +107,18 @@ void app_main(void) {
     xEventGroupWaitBits(wifi_event_group, WIFI_CONNECTED_BIT, false, true, portMAX_DELAY);
     printf("WiFi ready, starting HTTP client...\n");
 
-    // dht11_t dht11_sensor;
-    // dht11_sensor.dht11_pin = CONFIG_DHT11_PIN;
+    dht11_t dht11_sensor;
+    dht11_sensor.dht11_pin = CONFIG_DHT11_PIN;
 
     send_sensor_data(1.0, 69.0);
 
-    // while(true) {
-    //     if(!dht11_read(&dht11_sensor, CONFIG_CONNECTION_TIMEOUT)) {  
-    //         printf("[TEMP]> %.2f \n",dht11_sensor.temperature);
-    //         printf("[HUMID]> %.2f \n",dht11_sensor.humidity);
-    //     }
-    //     vTaskDelay(2000/portTICK_PERIOD_MS);
-    // } 
+    while(true) {
+        if(dht11_read(&dht11_sensor, CONFIG_CONNECTION_TIMEOUT) != -1) {  
+            printf("[TEMP]> %.2f \n",dht11_sensor.temperature);
+            printf("[HUMID]> %.2f \n",dht11_sensor.humidity);
+        }
+        vTaskDelay(4000/portTICK_PERIOD_MS);
+    } 
 
     printf("Wifi Initialized!\n");
 }
