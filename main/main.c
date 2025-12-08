@@ -104,15 +104,6 @@ void app_main(void) {
     ESP_ERROR_CHECK(nvs_flash_init());
     wifi_connection();
 
-    dht11_t dht11_sensor;
-    dht11_sensor.dht11_pin = CONFIG_DHT11_PIN;
-
-    while(true) {
-        if(!dht11_read(&dht11_sensor, CONFIG_CONNECTION_TIMEOUT)) {  
-            printf("[TEMP]> %.2f \n",dht11_sensor.temperature);
-            printf("[HUMID]> %.2f \n",dht11_sensor.humidity);
-        }
-        vTaskDelay(2000/portTICK_PERIOD_MS);
     xEventGroupWaitBits(wifi_event_group, WIFI_CONNECTED_BIT, false, true, portMAX_DELAY);
     printf("WiFi ready, starting HTTP client...\n");
 
