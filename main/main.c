@@ -26,31 +26,29 @@ static EventGroupHandle_t wifi_event_group;
 const int WIFI_CONNECTED_BIT = BIT0;
 
 void send_sensor_data(float temp, float humidity) {
-    // char json_payload[128];
-    //
-    // snprintf(json_payload, sizeof(json_payload), 
-    //          "{\"temperature\":%.2f,\"humidity\":%.2f}", 
-    //          temp, humidity);
+    char json_payload[128];
+    
+    snprintf(json_payload, sizeof(json_payload), 
+             "{\"temperature\":%.2f,\"humidity\":%.2f}", 
+             temp, humidity);
 
     esp_http_client_config_t config = {
-        .url = "http://webhook.site/cb1096ff-481e-4dd4-aa47-feeef8191e45",
-        .method = HTTP_METHOD_POST,
+        .url = API_URL,
+        .method = HTTP_METHOD_PATCH,
     };
+    
     esp_http_client_handle_t client = esp_http_client_init(&config);
-
-    const char *post_data = "{\"field1\":\"value1\"}";
-    esp_http_client_set_url(client, "http://webhook.site/cb1096ff-481e-4dd4-aa47-feeef8191e45");
-    esp_http_client_set_method(client, HTTP_METHOD_POST);
     esp_http_client_set_header(client, "Content-Type", "application/json");
-    esp_http_client_set_post_field(client, post_data, strlen(post_data));
-    int err = esp_http_client_perform(client);
+    esp_http_client_set_post_field(client, json_payload, strlen(json_payload));
+    
+    esp_err_t err = esp_http_client_perform(client);
     if (err == ESP_OK) {
-        ESP_LOGI("INF", "HTTP POST Status = %d, content_length = %"PRId64,
-                 esp_http_client_get_status_code(client),
-                 esp_http_client_get_content_length(client));
+        ESP_LOGI("HTTP", "Status = %d", esp_http_client_get_status_code(client));
     } else {
-        ESP_LOGE("INF", "HTTP POST request failed: %s", esp_err_to_name(err));
+        ESP_LOGE("HTTP", "Failed: %s", esp_err_to_name(err));
     }
+    
+    esp_http_client_cleanup(client);
 }
 
 static void wifi_event_handler(void *event_handler_arg, esp_event_base_t event_base, int32_t event_id, void *event_data)
