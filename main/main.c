@@ -15,6 +15,8 @@
 #include "esp_wifi_types_generic.h"
 
 #include "config.h"
+#include "sensor_data.h"
+
 #include <esp32-dht11.h>
 
 #define MAX_SSID_LENGTH 32
