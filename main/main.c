@@ -27,29 +27,47 @@
 static EventGroupHandle_t wifi_event_group;
 const int WIFI_CONNECTED_BIT = BIT0;
 
-void send_sensor_data(float temp, float humidity) {
-    char json_payload[128];
-    
-    snprintf(json_payload, sizeof(json_payload), 
-             "{\"temperature\":%.2f,\"humidity\":%.2f}", 
-             temp, humidity);
+static void payload_to_json(const sensor_payload_t *p, char *out, size_t out_len) {
+    size_t pos = 0;
+    pos += snprintf(out + pos, out_len - pos, "{");
 
-    esp_http_client_config_t config = {
-        .url = API_URL,
+    for (size_t i = 0; i < p->count; ++i) {
+        const sensor_reading_t *r = &p->readings[i];
+        const char *key = (r->type == SENSOR_TEMPERATURE) ? "temperature"
+                         : (r->type == SENSOR_HUMIDITY)    ? "humidity"
+                         : "unknown";
+
+        if (i > 0) {
+            pos += snprintf(out + pos, out_len - pos, ",");
+        }
+
+        pos += snprintf(out + pos, out_len - pos, "\"%s\":%.2f", key, r->value);
+    }
+
+    snprintf(out + pos, out_len - pos, "}");
+}
+
+void send_sensor_data(const sensor_payload_t *payload)
+{
+    char json_payload[256];
+    payload_to_json(payload, json_payload, sizeof(json_payload));
+
+    esp_http_client_config_t cfg = {
+        .url    = API_URL,
         .method = HTTP_METHOD_PATCH,
     };
-    
-    esp_http_client_handle_t client = esp_http_client_init(&config);
+
+    esp_http_client_handle_t client = esp_http_client_init(&cfg);
     esp_http_client_set_header(client, "Content-Type", "application/json");
     esp_http_client_set_post_field(client, json_payload, strlen(json_payload));
-    
+
     esp_err_t err = esp_http_client_perform(client);
     if (err == ESP_OK) {
         ESP_LOGI("HTTP", "Status = %d", esp_http_client_get_status_code(client));
     } else {
         ESP_LOGE("HTTP", "Failed: %s", esp_err_to_name(err));
     }
-    
+
     esp_http_client_cleanup(client);
 }
 
@@ -107,18 +125,33 @@ void app_main(void) {
     xEventGroupWaitBits(wifi_event_group, WIFI_CONNECTED_BIT, false, true, portMAX_DELAY);
     printf("WiFi ready, starting HTTP client...\n");
 
-    dht11_t dht11_sensor;
-    dht11_sensor.dht11_pin = CONFIG_DHT11_PIN;
+    // dht11_t dht11_sensor = { .dht11_pin = CONFIG_DHT11_PIN };
 
-    send_sensor_data(1.0, 69.0);
+    sensor_reading_t init_readings[] = {
+        { .type = SENSOR_TEMPERATURE, .value = 42.0f },
+        { .type = SENSOR_HUMIDITY,    .value = 69.0f }
+    };
+    sensor_payload_t init_payload = {
+        .readings = init_readings,
+        .count    = sizeof(init_readings) / sizeof(init_readings[0])
+    };
+    send_sensor_data(&init_payload); 
 
-    while(true) {
-        if(dht11_read(&dht11_sensor, CONFIG_CONNECTION_TIMEOUT) != -1) {  
-            printf("[TEMP]> %.2f \n",dht11_sensor.temperature);
-            printf("[HUMID]> %.2f \n",dht11_sensor.humidity);
-        }
-        vTaskDelay(4000/portTICK_PERIOD_MS);
-    } 
+    // while (true) {
+    //     if (dht11_read(&dht11_sensor, CONFIG_CONNECTION_TIMEOUT) != -1) {
+    //         printf("[TEMP]> %.2f\n", dht11_sensor.temperature);
+    //         printf("[HUMID]> %.2f\n", dht11_sensor.humidity);
+    //
+    //         sensor_reading_t live[] = {
+    //             { .type = SENSOR_TEMPERATURE, .value = dht11_sensor.temperature },
+    //             { .type = SENSOR_HUMIDITY,    .value = dht11_sensor.humidity }
+    //         };
+    //         sensor_payload_t live_payload = { .readings = live,
+    //                                           .count    = 2 };
+    //         send_sensor_data(&live_payload);
+    //     }
+    //     vTaskDelay(4000 / portTICK_PERIOD_MS);
+    // }
 
     printf("Wifi Initialized!\n");
 }
