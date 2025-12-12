@@ -125,33 +125,33 @@ void app_main(void) {
     xEventGroupWaitBits(wifi_event_group, WIFI_CONNECTED_BIT, false, true, portMAX_DELAY);
     printf("WiFi ready, starting HTTP client...\n");
 
-    // dht11_t dht11_sensor = { .dht11_pin = CONFIG_DHT11_PIN };
+    dht11_t dht11_sensor = { .dht11_pin = CONFIG_DHT11_PIN };
 
-    sensor_reading_t init_readings[] = {
-        { .type = SENSOR_TEMPERATURE, .value = 42.0f },
-        { .type = SENSOR_HUMIDITY,    .value = 69.0f }
-    };
-    sensor_payload_t init_payload = {
-        .readings = init_readings,
-        .count    = sizeof(init_readings) / sizeof(init_readings[0])
-    };
-    send_sensor_data(&init_payload); 
+    // sensor_reading_t init_readings[] = {
+    //     { .type = SENSOR_TEMPERATURE, .value = 42.0f },
+    //     { .type = SENSOR_HUMIDITY,    .value = 69.0f }
+    // };
+    // sensor_payload_t init_payload = {
+    //     .readings = init_readings,
+    //     .count    = sizeof(init_readings) / sizeof(init_readings[0])
+    // };
+    // send_sensor_data(&init_payload); 
 
-    // while (true) {
-    //     if (dht11_read(&dht11_sensor, CONFIG_CONNECTION_TIMEOUT) != -1) {
-    //         printf("[TEMP]> %.2f\n", dht11_sensor.temperature);
-    //         printf("[HUMID]> %.2f\n", dht11_sensor.humidity);
-    //
-    //         sensor_reading_t live[] = {
-    //             { .type = SENSOR_TEMPERATURE, .value = dht11_sensor.temperature },
-    //             { .type = SENSOR_HUMIDITY,    .value = dht11_sensor.humidity }
-    //         };
-    //         sensor_payload_t live_payload = { .readings = live,
-    //                                           .count    = 2 };
-    //         send_sensor_data(&live_payload);
-    //     }
-    //     vTaskDelay(4000 / portTICK_PERIOD_MS);
-    // }
+    while (true) {
+        if (dht11_read(&dht11_sensor, CONFIG_CONNECTION_TIMEOUT) != -1) {
+            printf("[TEMP]> %.2f\n", dht11_sensor.temperature);
+            printf("[HUMID]> %.2f\n", dht11_sensor.humidity);
+
+            sensor_reading_t live[] = {
+                { .type = SENSOR_TEMPERATURE, .value = dht11_sensor.temperature },
+                { .type = SENSOR_HUMIDITY,    .value = dht11_sensor.humidity }
+            };
+            sensor_payload_t live_payload = { .readings = live,
+                                              .count    = 2 };
+            send_sensor_data(&live_payload);
+        }
+        vTaskDelay(4000 / portTICK_PERIOD_MS);
+    }
 
     printf("Wifi Initialized!\n");
 }
