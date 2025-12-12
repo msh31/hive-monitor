@@ -7,18 +7,15 @@ Hardware side of an assignment from my course for a client.
 
 ---
 
-## Failed to build?
-Attempt the following solutions:
-```c
-# 1. wifi_config.h missing
-make a copy of ``wifi_config.h.example`` and remove the .example extension
-```
+## Before you build
+Make a copy of the ``config.h.example`` file and enter your wifi credentials and the location of an endpoint.
 
 ## Building
 ### Requirements
 - [ESP IDF framework](https://github.com/espressif/esp-idf)
 - Basic knowledge of the ``C`` programming language
 - An ESP32 to test your code
+- (Optional) DHT11 sensor & HX711 sensor connected to tbe ESP32
 
 ### Instructions
 1. Initialize the development environment
