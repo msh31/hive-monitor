@@ -5,7 +5,7 @@ Hardware side of an assignment from my course for a client.
 - [Frontend](https://github.com/DaanBouma/hive-frontend)
 - [Backend](https://github.com/punthenk/Bee_API)
 
----
+--- 
 
 ## Before you build
 Make a copy of the ``config.h.example`` file and enter your wifi credentials and the location of an endpoint.
