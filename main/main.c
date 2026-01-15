@@ -136,6 +136,7 @@ void app_main(void) {
     //     .count    = sizeof(init_readings) / sizeof(init_readings[0])
     // };
     // send_sensor_data(&init_payload); 
+    printf("Wifi Initialized!\n");
 
     while (true) {
         if (dht11_read(&dht11_sensor, CONFIG_CONNECTION_TIMEOUT) != -1) {
@@ -150,8 +151,6 @@ void app_main(void) {
                                               .count    = 2 };
             send_sensor_data(&live_payload);
         }
-        vTaskDelay(4000 / portTICK_PERIOD_MS);
+        vTaskDelay(60000 / portTICK_PERIOD_MS);
     }
-
-    printf("Wifi Initialized!\n");
 }
