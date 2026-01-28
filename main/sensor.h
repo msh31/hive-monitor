@@ -23,6 +23,5 @@ typedef struct {
 
 static void payload_to_json(const sensor_payload_t *p, char *out, size_t out_len);
 void send_sensor_data(const sensor_payload_t *payload);
-void process_sensor_payload(const sensor_payload_t *payload);
 
 #endif
