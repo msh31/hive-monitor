@@ -1,3 +1,6 @@
 [submodule "components/esp32-dht11"]
 	path = components/esp32-dht11
 	url = https://github.com/abdellah2288/esp32-dht11.git
+[submodule "components/esp32-hx711"]
+	path = components/esp32-hx711
+	url = https://github.com/codebydant/hx711-esp-idf-library.git
