@@ -21,16 +21,6 @@ void app_main(void) {
 
     dht11_t dht11_sensor = { .dht11_pin = CONFIG_DHT11_PIN };
 
-    // sensor_reading_t init_readings[] = {
-    //     { .type = SENSOR_TEMPERATURE, .value = 42.0f },
-    //     { .type = SENSOR_HUMIDITY,    .value = 69.0f }
-    // };
-    // sensor_payload_t init_payload = {
-    //     .readings = init_readings,
-    //     .count    = sizeof(init_readings) / sizeof(init_readings[0])
-    // };
-    // send_sensor_data(&init_payload); 
-
     while (true) {
         if (dht11_read(&dht11_sensor, CONFIG_CONNECTION_TIMEOUT) != -1) {
             printf("[TEMP]> %.2f\n", dht11_sensor.temperature);
