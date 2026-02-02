@@ -7,15 +7,16 @@
 #include "esp_log.h"
 #include "esp_http_client.h"
 
-static void payload_to_json(const sensor_payload_t *p, char *out, size_t out_len) {
+void payload_to_json(const sensor_payload_t *p, char *out, size_t out_len) {
     size_t pos = 0;
     pos += snprintf(out + pos, out_len - pos, "{");
 
     for (size_t i = 0; i < p->count; ++i) {
         const sensor_reading_t *r = &p->readings[i];
         const char *key = (r->type == SENSOR_TEMPERATURE) ? "temperature"
-                         : (r->type == SENSOR_HUMIDITY)    ? "humidity"
-                         : "unknown";
+            : (r->type == SENSOR_HUMIDITY)    ? "humidity"
+            : (r->type == SENSOR_WEIGHT)       ? "weight"
+            : "unknown";
 
         if (i > 0) {
             pos += snprintf(out + pos, out_len - pos, ",");
