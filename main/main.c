@@ -23,9 +23,12 @@ void app_main(void) {
     // dht11_t dht11_sensor = { .dht11_pin = CONFIG_DHT11_PIN };
 
     int32_t raw_data = 0;
-    hx711_t scale = { .dout = CONFIG_HX711_DOUT, .pd_sck = CONFIG_HX711_SCK};
+    hx711_t scale = {
+        .dout = CONFIG_HX711_DOUT,
+        .pd_sck = CONFIG_HX711_SCK,
+        .gain = HX711_GAIN_A_128
+    };
     hx711_init(&scale);
-    hx711_set_gain(&scale, HX711_GAIN_A_128);
     vTaskDelay(100 / portTICK_PERIOD_MS);
 
     while (true) {
