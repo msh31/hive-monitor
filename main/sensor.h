@@ -4,11 +4,14 @@
 #include <stddef.h>
 
 #define CONFIG_DHT11_PIN GPIO_NUM_26
+#define CONFIG_HX711_DOUT GPIO_NUM_33
+#define CONFIG_HX711_SCK GPIO_NUM_32
 #define CONFIG_CONNECTION_TIMEOUT 5
 
 typedef enum {
     SENSOR_TEMPERATURE,
     SENSOR_HUMIDITY,
+    SENSOR_WEIGHT,
 } sensor_type_t;
 
 typedef struct {
@@ -21,7 +24,7 @@ typedef struct {
     size_t           count;
 } sensor_payload_t;
 
-static void payload_to_json(const sensor_payload_t *p, char *out, size_t out_len);
+void payload_to_json(const sensor_payload_t *p, char *out, size_t out_len);
 void send_sensor_data(const sensor_payload_t *payload);
 
 #endif

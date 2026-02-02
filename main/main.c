@@ -12,6 +12,7 @@
 #include "sensor.h"
 
 #include <esp32-dht11.h>
+#include <hx711_lib.h>
 
 void app_main(void) {
     ESP_ERROR_CHECK(nvs_flash_init());
@@ -19,21 +20,34 @@ void app_main(void) {
     xEventGroupWaitBits(wifi_event_group, WIFI_CONNECTED_BIT, false, true, portMAX_DELAY);
     printf("WiFi ready!\n");
 
-    dht11_t dht11_sensor = { .dht11_pin = CONFIG_DHT11_PIN };
+    // dht11_t dht11_sensor = { .dht11_pin = CONFIG_DHT11_PIN };
+
+    int32_t raw_data = 0;
+    hx711_t scale = { .dout = CONFIG_HX711_DOUT, .pd_sck = CONFIG_HX711_SCK};
+    hx711_init(&scale);
+    hx711_set_gain(&scale, HX711_GAIN_A_128);
+    vTaskDelay(100 / portTICK_PERIOD_MS);
 
     while (true) {
-        if (dht11_read(&dht11_sensor, CONFIG_CONNECTION_TIMEOUT) != -1) {
-            printf("[TEMP]> %.2f\n", dht11_sensor.temperature);
-            printf("[HUMID]> %.2f\n", dht11_sensor.humidity);
-
-            sensor_reading_t live[] = {
-                { .type = SENSOR_TEMPERATURE, .value = dht11_sensor.temperature },
-                { .type = SENSOR_HUMIDITY,    .value = dht11_sensor.humidity }
-            };
-            sensor_payload_t live_payload = { .readings = live,
-                                              .count    = 2 };
-            send_sensor_data(&live_payload);
+        if (hx711_wait(&scale, 1000) == ESP_OK) {
+            hx711_read_data(&scale, &raw_data);
+            printf("Weight: %ld\n", raw_data);
+        } else {
+            printf("HX711 timeout - not ready\n");
         }
+
+        // if (dht11_read(&dht11_sensor, CONFIG_CONNECTION_TIMEOUT) != -1) {
+        //     printf("[TEMP]> %.2f\n", dht11_sensor.temperature);
+        //     printf("[HUMID]> %.2f\n", dht11_sensor.humidity);
+        //
+        //     // sensor_reading_t live[] = {
+        //     //     { .type = SENSOR_TEMPERATURE, .value = dht11_sensor.temperature },
+        //     //     { .type = SENSOR_HUMIDITY,    .value = dht11_sensor.humidity }
+        //     // };
+        //     // sensor_payload_t live_payload = { .readings = live,
+        //     //                                   .count    = 2 };
+        //     // send_sensor_data(&live_payload);
+        // }
         vTaskDelay(60000 / portTICK_PERIOD_MS);
     }
 }
