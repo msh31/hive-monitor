@@ -1,0 +1,6 @@
+[submodule "components/dht11"]
+	path = components/dht11
+	url = ssh://git@git.marco007.dev:2222/marco/esp32-dht11.git
+[submodule "components/hx711"]
+	path = components/hx711
+	url = ssh://git@git.marco007.dev:2222/marco/hx711-esp-idf-library.git
