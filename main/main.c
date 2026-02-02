@@ -26,7 +26,7 @@ void app_main(void) {
     hx711_t scale = {
         .dout = CONFIG_HX711_DOUT,
         .pd_sck = CONFIG_HX711_SCK,
-        .gain = HX711_GAIN_A_128
+        .gain = HX711_GAIN_A_64
     };
     hx711_init(&scale);
     vTaskDelay(100 / portTICK_PERIOD_MS);
@@ -35,6 +35,7 @@ void app_main(void) {
         if (hx711_wait(&scale, 1000) == ESP_OK) {
             hx711_read_data(&scale, &raw_data);
             printf("Weight: %ld\n", raw_data);
+            printf("RAW HEX: 0x%08lx\n", raw_data);
         } else {
             printf("HX711 timeout - not ready\n");
         }
