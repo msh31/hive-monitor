@@ -22,22 +22,22 @@ void app_main(void) {
 
     // dht11_t dht11_sensor = { .dht11_pin = CONFIG_DHT11_PIN };
 
-    int32_t raw_data = 0;
-    hx711_t scale = {
-        .dout = CONFIG_HX711_DOUT,
-        .pd_sck = CONFIG_HX711_SCK,
-        .gain = HX711_GAIN_A_128
-    };
-    hx711_init(&scale);
-    vTaskDelay(100 / portTICK_PERIOD_MS);
+    // int32_t raw_data = 0;
+    // hx711_t scale = {
+    //     .dout = CONFIG_HX711_DOUT,
+    //     .pd_sck = CONFIG_HX711_SCK,
+    //     .gain = HX711_GAIN_A_128
+    // };
+    // hx711_init(&scale);
+    // vTaskDelay(100 / portTICK_PERIOD_MS);
 
     while (true) {
-        if (hx711_wait(&scale, 1000) == ESP_OK) {
-            hx711_read_data(&scale, &raw_data);
-            printf("Weight: %ld\n", raw_data);
-        } else {
-            printf("HX711 timeout - not ready\n");
-        }
+        // if (hx711_wait(&scale, 1000) == ESP_OK) {
+        //     hx711_read_data(&scale, &raw_data);
+        //     printf("Weight: %ld\n", raw_data);
+        // } else {
+        //     printf("HX711 timeout - not ready\n");
+        // }
 
         // if (dht11_read(&dht11_sensor, CONFIG_CONNECTION_TIMEOUT) != -1) {
         //     printf("[TEMP]> %.2f\n", dht11_sensor.temperature);
@@ -51,6 +51,15 @@ void app_main(void) {
         //     //                                   .count    = 2 };
         //     // send_sensor_data(&live_payload);
         // }
+        printf("sending sample data to api..\n");
+        sensor_reading_t test_data[] = {
+            { .type = SENSOR_TEMPERATURE, .value = 69 },
+            { .type = SENSOR_HUMIDITY,    .value = 420 }
+            // { .type = SENSOR_WEIGHT,    .value = 35.4 }
+        };
+        sensor_payload_t payload = { .readings = test_data,
+                                          .count    = 2 };
+        send_sensor_data(&payload);
         vTaskDelay(60000 / portTICK_PERIOD_MS);
     }
 }
